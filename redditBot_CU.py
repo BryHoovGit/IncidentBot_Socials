@@ -23,19 +23,20 @@ subreddit = reddit.subreddit(subreddit_name)
 # Get the last 10 posts from the subreddit
 posts = subreddit.new(limit=10)
 
-# Create a list of the phrases you want to search for
-phrases = ["outage", "down", "can't login", "infinite loading", "Outage"]
+# Get the phrases you want to search for from the environment variable
+phrases = [phrase.strip("[]").replace('"', '')
+           for phrase in os.getenv("PHRASES").split(",")]
 
 
 def check_post_for_phrases(post, phrases):
     """Checks a post for one of the phrases in either post.title or post.selftext.
 
     Args:
-        post: A PRAW submission object.
-        phrases: A list of strings to search for.
+      post: A PRAW submission object.
+      phrases: A list of strings to search for.
 
     Returns:
-        True if the post contains one of the phrases, False otherwise.
+      True if the post contains one of the phrases, False otherwise.
     """
 
     for phrase in phrases:
@@ -45,7 +46,7 @@ def check_post_for_phrases(post, phrases):
 
 
 def is_office_hours():
-    """Checks if it is currently office hours in Pacific Standard Time (PST)."""
+    # Checks if it is currently office hours in Pacific Standard Time (PST).
 
     date_format = '%m_%d_%Y_%H_%M_%S_%Z'
     now = datetime.datetime.now(tz=pytz.timezone('UTC'))
