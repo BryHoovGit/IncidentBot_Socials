@@ -64,7 +64,7 @@ post_titles = []
 for post in posts:
     if check_post_for_phrases(post, phrases):
         # Append the Reddit title of each post to the post_titles array
-        post_titles.append(f'*MATCH**| {post.title} |**MATCH*')
+        post_titles.append(f'✅ {post.title} ✅')
         # Create a POST request to webhook.site
         payload = {
             "post_id": post.id,
@@ -85,7 +85,7 @@ for post in posts:
             print(
                 f"POST request to {webhook_url} failed with status code {response.status_code}.")
     else:
-        post_titles.append(post.title)
+        post_titles.append(f'❌ {post.title} ❌')
 
 # Print the post_titles array to the console, separated by a line break and indented
 for post_title in post_titles:
