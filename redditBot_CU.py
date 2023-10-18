@@ -73,7 +73,7 @@ def is_office_hours():
 
     return hour >= 9 and hour < 17
 
-logger.info(f"🕑 Trigger during office hours: {is_office_hours()}🕑")
+logger.info(f"🕑 Triggered during office hours: {is_office_hours()}🕑")
 
 logger.info(f"🕵️‍♀️ Searching last 10 posts to /r/{subreddit}.🕵️‍♀️")
 # Check each post for the specified phrases and send a POST request to webhook.site if one is found
