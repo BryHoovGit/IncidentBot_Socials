@@ -73,33 +73,39 @@ def is_office_hours():
 
     return hour >= 9 and hour < 17
 
-logger.info(f"🕑 Triggered during office hours: {is_office_hours()}🕑")
 
-logger.info(f"🕵️‍♀️ Searching last 10 posts to /r/{subreddit}.🕵️‍♀️")
-# Check each post for the specified phrases and send a POST request to webhook.site if one is found
-for post in posts:
-    if check_post_for_phrases(post, phrases):
-        # Log a message to the logger
-        logger.info(f'✅ Found match.✅')
-        logger.info(f'✅ {post.title}✅')
-        # Create a POST request to webhook.site
-        payload = {
-            "post_id": post.id,
-            "post_title": post.title,
-            "post_url": post.url,
-            "post_text": post.selftext,
-            "is_office_hours": is_office_hours()
-        }
-        headers = {
-            "Content-Type": "application/json"
-        }
-        response = requests.post(webhook_url, json=payload, headers=headers)
-        logger.info(f"📤 Sending match to webhook.📤")
-        # Check if the POST request was successful
-        if response.status_code == 200:
-            logger.info(f"👍 POST request to {webhook_url} was successful.👍")
+def lambda_handler(event, context):
+    """A Lambda function that checks the last 10 posts on a specified subreddit for certain phrases and sends a POST request to webhook.site if a match is found."""
+
+    logger.info(f"🕑 Triggered during office hours: {is_office_hours()}🕑")
+
+    logger.info(f"🕵️‍♀️ Searching last 10 posts to /r/{subreddit}.🕵️‍♀️")
+    # Check each post for the specified phrases and send a POST request to webhook.site if one is found
+    for post in posts:
+        if check_post_for_phrases(post, phrases):
+            # Log a message to the logger
+            logger.info(f'✅ Found match.✅')
+            logger.info(f'✅ {post.title}✅')
+            # Create a POST request to webhook.site
+            payload = {
+                "post_id": post.id,
+                "post_title": post.title,
+                "post_url": post.url,
+                "post_text": post.selftext,
+                "is_office_hours": is_office_hours()
+            }
+            headers = {
+                "Content-Type": "application/json"
+            }
+            response = requests.post(
+                webhook_url, json=payload, headers=headers)
+            logger.info(f"📤 Sending match to webhook.📤")
+            # Check if the POST request was successful
+            if response.status_code == 200:
+                logger.info(
+                    f"👍 POST request to {webhook_url} was successful.👍")
+            else:
+                logger.error(
+                    f"👎 POST request to {webhook_url} failed with status code {response.status_code}.👎")
         else:
-            logger.error(
-                f"👎 POST request to {webhook_url} failed with status code {response.status_code}.👎")
-    else:
-        logger.debug(f'❌ {post.title}❌')
+            logger.debug(f'❌ {post.title}❌')
