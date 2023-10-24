@@ -1,7 +1,9 @@
 import logging
 import praw
 import json
-import boto3
+import os
+import datetime
+import requests
 
 webhook = os.environ.get("WEBHOOK_URL")
 subreddit_name = os.environ.get("SUBREDDIT_NAME")
@@ -20,46 +22,44 @@ posts = subreddit.new(limit=10)
 
 
 def check_post_for_phrases(post, phrases):
-    # True if the post contains one of the phrases, False otherwise.
+    """Returns True if the post contains one of the phrases, False otherwise."""
     return any(phrase in post.title or phrase in post.selftext for phrase in phrases)
 
 
+def send_post_request(post):
+    """Sends a POST request to `webhook` with the post data."""
+    payload = {
+        "post_id": post.id,
+        "post_title": post.title,
+        "post_url": post.url,
+        "post_text": post.selftext,
+        "is_office_hours": datetime.datetime.now().hour >= 9 and datetime.datetime.now().hour < 17
+    }
+
+    headers = {
+        "Content-Type": "application/json"
+    }
+
+    response = requests.post(webhook, headers=headers, json=payload)
+
+    # Check if the POST request was successful
+    if response.status_code == 200:
+        logging.info("POST request to {} was successful.".format(webhook))
+    else:
+        logging.error("POST request to {} failed with status code {}.".format(
+            webhook, response.status_code))
+
+
 def lambda_handler(event, context):
-    # Log a message to the console
+    """Triggered during office hours."""
     logging.info("Triggered during office hours: {}".format(
-        datetime.now().hour))
+        datetime.datetime.now().hour))
     logging.info("Searching last 10 posts to /r/{}.".format(subreddit_name))
 
     # Check each post for the specified phrases and send a POST request to webhook.site if one is found
     for post in subreddit.new(limit=10):
         if check_post_for_phrases(post, phrases):
-            # Create a POST request to webhook.site
-            payload = {
-                "post_id": post.id,
-                "post_title": post.title,
-                "post_url": post.url,
-                "post_text": post.selftext,
-                "is_office_hours": datetime.now().hour >= 9 and datetime.now().hour < 17
-            }
-            headers = {
-                "Content-Type": "application/json"
-            }
-
-            # Send the POST request
-            client = boto3.client('apigatewaymanagementapi')
-            response = client.post_to_connection(
-                ConnectionId=webhook,
-                Data=json.dumps(payload, indent=4),
-                Headers=headers
-            )
-
-            # Check if the POST request was successful
-            if response['StatusCode'] == 200:
-                logging.info(
-                    "POST request to {} was successful.".format(webhook))
-            else:
-                logging.error("POST request to {} failed with status code {}.".format(
-                    webhook, response['StatusCode']))
+            send_post_request(post)
 
     return {
         'statusCode': 200,
