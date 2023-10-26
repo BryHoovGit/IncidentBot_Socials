@@ -9,6 +9,10 @@ webhook = os.environ.get("WEBHOOK_URL")
 subreddit_name = os.environ.get("SUBREDDIT_NAME")
 phrases = json.loads(os.environ.get("PHRASES"))
 
+# Configure the logger
+logger = logging.getLogger()
+logger.setLevel('INFO')
+
 # Create a Reddit instance
 reddit = praw.Reddit(client_id=os.environ.get("CLIENT_ID"),
                      client_secret=os.environ.get("CLIENT_SECRET"),
@@ -23,11 +27,16 @@ posts = subreddit.new(limit=10)
 
 def check_post_for_phrases(post, phrases):
     """Returns True if the post contains one of the phrases, False otherwise."""
+
     return any(phrase in post.title or phrase in post.selftext for phrase in phrases)
 
 
 def send_post_request(post):
     """Sends a POST request to `webhook` with the post data."""
+
+    logger.info(
+        "Sending POST request to webhook with post {}...".format(post.id))
+
     payload = {
         "post_id": post.id,
         "post_title": post.title,
@@ -44,22 +53,26 @@ def send_post_request(post):
 
     # Check if the POST request was successful
     if response.status_code == 200:
-        logging.info("POST request to {} was successful.".format(webhook))
+        logger.info("👍 POST request to {} was successful.".format(webhook))
     else:
-        logging.error("POST request to {} failed with status code {}.".format(
+        logger.error("👎 POST request to {} failed with status code {}.".format(
             webhook, response.status_code))
 
 
 def lambda_handler(event, context):
     """Triggered during office hours."""
-    logging.info("Triggered during office hours: {}".format(
-        datetime.datetime.now().hour))
-    logging.info("Searching last 10 posts to /r/{}.".format(subreddit_name))
+    logger.info("🕑 Triggered during office hours: {}".format(
+        datetime.datetime.now().hour >= 9 and datetime.datetime.now().hour < 17))
+    logger.info("🔎 Searching last 10 posts to /r/{}.".format(subreddit_name))
 
-    # Check each post for the specified phrases and send a POST request to webhook.site if one is found
+    # Create a list of all the post titles, with a ✅ or ❌ prefix depending on whether the post contains a phrase
+    post_titles = []
     for post in subreddit.new(limit=10):
-        if check_post_for_phrases(post, phrases):
-            send_post_request(post)
+        prefix = "✅ " if check_post_for_phrases(post, phrases) else "❌ "
+        post_titles.append(prefix + post.title)
+
+    # Send a logger event with the list of post titles
+    logger.info("Post titles: {}".format(post_titles))
 
     return {
         'statusCode': 200,
