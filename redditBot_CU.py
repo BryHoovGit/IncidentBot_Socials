@@ -42,7 +42,7 @@ def send_post_request(post):
         "post_title": post.title,
         "post_url": post.url,
         "post_text": post.selftext,
-        "is_office_hours": datetime.datetime.now().hour >= 9 and datetime.datetime.now().hour < 17
+        "is_office_hours": datetime.datetime.now().hour >= 16 and datetime.datetime.now().hour <= 23
     }
 
     headers = {
@@ -62,7 +62,7 @@ def send_post_request(post):
 def lambda_handler(event, context):
     """Triggered during office hours."""
     logger.info("🕑 Triggered during office hours: {}".format(
-        datetime.datetime.now().hour >= 9 and datetime.datetime.now().hour < 17))
+        datetime.datetime.now().hour >= 16 and datetime.datetime.now().hour <= 23))
     logger.info("🔎 Searching last 10 posts to /r/{}.".format(subreddit_name))
 
     # Create a list of all the post titles, with a ✅ or ❌ prefix depending on whether the post contains a phrase
