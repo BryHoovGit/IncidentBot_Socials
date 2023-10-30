@@ -35,7 +35,7 @@ def send_post_request(post):
     """Sends a POST request to `webhook` with the post data."""
 
     logger.info(
-        "Sending POST request to webhook with post {}...".format(post.id))
+        "📫 Sending POST request to webhook with post {}...".format(post.id))
 
     payload = {
         "post_id": post.id,
