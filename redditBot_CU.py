@@ -74,6 +74,10 @@ def lambda_handler(event, context):
     # Send a logger event with the list of post titles
     logger.info("Post titles: {}".format(post_titles))
 
+    for post in subreddit.new(limit=10):
+        if check_post_for_phrases(post, phrases):
+            send_post_request(post)
+
     return {
         'statusCode': 200,
         'body': json.dumps('{"message": "Lambda function executed successfully."}')
